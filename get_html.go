@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 func getHTML(rawURL string) (string, error) {
@@ -18,8 +19,9 @@ func getHTML(rawURL string) (string, error) {
 		return "", fmt.Errorf("StatusCode: %v - %s", statusCode, resp.Status)
 	}
 
-	contentType := resp.Header.Get("Content-Type")
-	if contentType != "text/html; charset=utf-8" {
+	// Content-Type might have encoding attribute, separated on ';'
+	contentType := strings.Split(resp.Header.Get("Content-Type"), ";")[0]
+	if contentType != "text/html" {
 		return "", fmt.Errorf("Content-Type error: %s", contentType)
 	}
 
