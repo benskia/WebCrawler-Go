@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -24,7 +24,7 @@ func getURLsFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
 				if a.Key == "href" {
 					href, err := url.Parse(a.Val)
 					if err != nil {
-						log.Println("Error parsing HREF: ", err)
+						fmt.Println("Error parsing HREF: ", err)
 						continue
 					}
 

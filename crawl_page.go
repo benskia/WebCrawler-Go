@@ -1,12 +1,12 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net/url"
 )
 
 func (cfg *config) crawlPage(rawCurrentURL string) {
-	log.Println("Crawling page: ", rawCurrentURL)
+	fmt.Println("Crawling page: ", rawCurrentURL)
 
 	cfg.concurrencyControl <- struct{}{}
 	defer func() {
@@ -20,7 +20,7 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 	numPages := len(cfg.pages)
 	cfg.mu.Unlock()
 	if numPages >= cfg.maxPages {
-		log.Println("Page limit exceeded.")
+		fmt.Println("Page limit exceeded.")
 		return
 	}
 
@@ -28,7 +28,7 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 	// links will have matching domains.
 	currentURL, err := url.Parse(rawCurrentURL)
 	if err != nil {
-		log.Println("Error parsing current URL: ", err)
+		fmt.Println("Error parsing current URL: ", err)
 		return
 	}
 
@@ -38,7 +38,7 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 
 	normalizedURL, err := normalizeURL(rawCurrentURL)
 	if err != nil {
-		log.Printf("Error normalizing URL %s : %v\n", rawCurrentURL, err)
+		fmt.Printf("Error normalizing URL %s : %v\n", rawCurrentURL, err)
 		return
 	}
 
@@ -50,13 +50,13 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 
 	htmlBody, err := getHTML(rawCurrentURL)
 	if err != nil {
-		log.Printf("Error getting HTML from %s : %v\n", rawCurrentURL, err)
+		fmt.Printf("Error getting HTML from %s : %v\n", rawCurrentURL, err)
 		return
 	}
 
 	urls, err := getURLsFromHTML(htmlBody, cfg.baseURL)
 	if err != nil {
-		log.Println("Error getting URLs from HTML body : ", err)
+		fmt.Println("Error getting URLs from HTML body : ", err)
 		return
 	}
 
