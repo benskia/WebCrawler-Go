@@ -7,6 +7,11 @@ import (
 
 func (cfg *config) crawlPage(rawCurrentURL string) {
 	cfg.concurrencyControl <- struct{}{}
+	defer func() {
+		<-cfg.concurrencyControl
+		cfg.wg.Done()
+	}()
+
 	// We're crawling withing a site's internal structure, so any traversable
 	// links will have matching domains.
 	currentURL, err := url.Parse(rawCurrentURL)
@@ -15,9 +20,7 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 		return
 	}
 
-	baseHostname := cfg.baseURL.Hostname()
-	currentHostname := currentURL.Hostname()
-	if baseHostname != currentHostname {
+	if cfg.baseURL.Hostname() != currentURL.Hostname() {
 		return
 	}
 
@@ -28,7 +31,8 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 	}
 
 	// We want to track occurrences, but we don't want to re-visit links.
-	if cfg.addPageVisit(normalizedURL) {
+	isFirst := cfg.addPageVisit(normalizedURL)
+	if !isFirst {
 		return
 	}
 
@@ -38,7 +42,7 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 		return
 	}
 
-	urls, err := getURLsFromHTML(htmlBody, baseHostname)
+	urls, err := getURLsFromHTML(htmlBody, cfg.baseURL)
 	if err != nil {
 		log.Println("Error getting URLs from HTML body : ", err)
 		return
@@ -46,9 +50,6 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 
 	for _, url := range urls {
 		cfg.wg.Add(1)
-		defer cfg.wg.Done()
 		go cfg.crawlPage(url)
 	}
-
-	<-cfg.concurrencyControl
 }

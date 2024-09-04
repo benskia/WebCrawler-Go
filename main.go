@@ -20,7 +20,12 @@ func main() {
 	baseURL := args[0]
 	fmt.Println("starting crawl of: ", baseURL)
 
-	config := NewConfig(baseURL, maxConcurrency)
+	config, err := NewConfig(baseURL, maxConcurrency)
+	if err != nil {
+		fmt.Println("Failed to create configuration.")
+		os.Exit(1)
+	}
+
 	config.crawlPage(baseURL)
 	config.wg.Wait()
 

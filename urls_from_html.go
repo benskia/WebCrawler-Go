@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-func getURLsFromHTML(htmlBody, rawBaseURL string) ([]string, error) {
+func getURLsFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
 	r := strings.NewReader(htmlBody)
 
 	doc, err := html.Parse(r)
@@ -16,37 +16,29 @@ func getURLsFromHTML(htmlBody, rawBaseURL string) ([]string, error) {
 		return []string{}, err
 	}
 
-	urls := []string{}
-
-	var f func(*html.Node)
-	f = func(n *html.Node) {
+	var urls []string
+	var traverseNodes func(*html.Node)
+	traverseNodes = func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "a" {
 			var href string
 			for _, a := range n.Attr {
 				if a.Key == "href" {
-					href = a.Val
-					break
+					href, err := url.Parse(a.Val)
+					if err != nil {
+						log.Println("Error parsing HREF: ", err)
+						continue
+					}
+
+					resolvedURL := baseURL.ResolveReference(href)
+					urls = append(urls, resolvedURL.String())
 				}
-			}
-
-			u, err := url.Parse(href)
-			if err != nil {
-				log.Println("Error parsing href to URL: ", err)
-				return
-			}
-
-			// A blank Host indicates relative URL.
-			if u.Host == "" {
-				urls = append(urls, rawBaseURL+u.Path)
-			} else {
-				urls = append(urls, u.Scheme+"://"+u.Host+u.Path)
 			}
 		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
+			traverseNodes(c)
 		}
 	}
-	f(doc)
+	traverseNodes(doc)
 
 	return urls, nil
 }
