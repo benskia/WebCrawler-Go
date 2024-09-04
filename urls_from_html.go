@@ -16,7 +16,7 @@ func getURLsFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
 		return []string{}, err
 	}
 
-	var urls []string
+	urls := []string{}
 	var traverseNodes func(*html.Node)
 	traverseNodes = func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "a" {
