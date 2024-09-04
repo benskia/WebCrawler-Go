@@ -5,6 +5,8 @@ import (
 	"os"
 )
 
+const maxConcurrency int = 1
+
 func main() {
 	// This webcrawler expects a single URL arg.
 	args := os.Args[1:]
@@ -20,10 +22,11 @@ func main() {
 	baseURL := args[0]
 	fmt.Println("starting crawl of: ", baseURL)
 
-	pages := make(map[string]int)
-	crawlPage(baseURL, baseURL, pages)
+	config := NewConfig(baseURL, maxConcurrency)
+	config.crawlPage(baseURL)
+	config.wg.Wait()
 
-	for url, count := range pages {
+	for url, count := range config.pages {
 		fmt.Printf("%s : %d\n", url, count)
 	}
 }

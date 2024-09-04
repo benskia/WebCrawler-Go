@@ -3,24 +3,58 @@ package main
 import (
 	"log"
 	"net/url"
+	"sync"
 )
 
-func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
+type config struct {
+	pages              map[string]int
+	baseURL            *url.URL
+	mu                 *sync.Mutex
+	concurrencyControl chan struct{}
+	wg                 *sync.WaitGroup
+}
+
+func NewConfig(rawBaseURL string, maxConcurrency int) *config {
+	baseURL, err := url.Parse(rawBaseURL)
+	if err != nil {
+		log.Printf("Error parsing %s for config URL: %v", rawBaseURL, err)
+		return &config{}
+	}
+
+	return &config{
+		pages:              make(map[string]int),
+		baseURL:            baseURL,
+		mu:                 &sync.Mutex{},
+		concurrencyControl: make(chan struct{}, maxConcurrency),
+		wg:                 &sync.WaitGroup{},
+	}
+}
+
+func (cfg *config) addPageVisit(normalizedURL string) (exists bool) {
+	cfg.mu.Lock()
+	defer cfg.mu.Unlock()
+	_, ok := cfg.pages[normalizedURL]
+
+	if ok {
+		cfg.pages[normalizedURL]++
+	} else {
+		cfg.pages[normalizedURL] = 1
+	}
+
+	return ok
+}
+
+func (cfg *config) crawlPage(rawCurrentURL string) {
 	// log.Printf("Crawling...BaseURL: %s - CurrentURL: %s", rawBaseURL, rawCurrentURL)
 
 	// We're crawling withing a site's internal structure, so any traversable
 	// links will have matching domains.
-	baseURL, err := url.Parse(rawBaseURL)
-	if err != nil {
-		log.Println("Error parsing base URL: ", err)
-	}
-
 	currentURL, err := url.Parse(rawCurrentURL)
 	if err != nil {
 		log.Println("Error parsing current URL: ", err)
 	}
 
-	if baseURL.Hostname() != currentURL.Hostname() {
+	if cfg.baseURL.Hostname() != currentURL.Hostname() {
 		return
 	}
 
@@ -30,13 +64,11 @@ func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
 		return
 	}
 
-	// Part of our tracking involves occurrence metrics.
-	if _, ok := pages[normalizedURL]; ok {
-		pages[normalizedURL]++
+	// Part of our tracking involves occurrence metrics, and we want to avoid
+	// re-visiting links.
+	if cfg.addPageVisit(normalizedURL) {
 		return
 	}
-
-	pages[normalizedURL] = 1
 
 	htmlBody, err := getHTML(rawCurrentURL)
 	if err != nil {
@@ -44,13 +76,21 @@ func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
 		return
 	}
 
-	urls, err := getURLsFromHTML(htmlBody, rawBaseURL)
+	urls, err := getURLsFromHTML(htmlBody, cfg.baseURL.Hostname())
 	if err != nil {
 		log.Println("Error getting URLs from HTML body : ", err)
 		return
 	}
 
 	for _, url := range urls {
-		crawlPage(rawBaseURL, url, pages)
+		cfg.wg.Add(1)
+		go func(url string) {
+			cfg.concurrencyControl <- struct{}{}
+			defer cfg.wg.Done()
+			defer func() {
+				<-cfg.concurrencyControl
+			}()
+			cfg.crawlPage(url)
+		}(url)
 	}
 }
