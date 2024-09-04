@@ -6,7 +6,7 @@ import (
 )
 
 func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
-	log.Printf("Crawling...BaseURL: %s - CurrentURL: %s", rawBaseURL, rawCurrentURL)
+	// log.Printf("Crawling...BaseURL: %s - CurrentURL: %s", rawBaseURL, rawCurrentURL)
 
 	// We're crawling withing a site's internal structure, so any traversable
 	// links will have matching domains.
@@ -33,9 +33,10 @@ func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
 	// Part of our tracking involves occurrence metrics.
 	if _, ok := pages[normalizedURL]; ok {
 		pages[normalizedURL]++
-	} else {
-		pages[normalizedURL] = 1
+		return
 	}
+
+	pages[normalizedURL] = 1
 
 	htmlBody, err := getHTML(rawCurrentURL)
 	if err != nil {
