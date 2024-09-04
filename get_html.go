@@ -19,8 +19,9 @@ func getHTML(rawURL string) (string, error) {
 		return "", fmt.Errorf("StatusCode: %v - %s", statusCode, resp.Status)
 	}
 
-	// Content-Type might have encoding attribute, separated on ';'
-	contentType := strings.Split(resp.Header.Get("Content-Type"), ";")[0]
+	contentTypeHeader := resp.Header.Get("Content-Type")
+	// Content-Type Headers might have encoding attribute, separated on ';'
+	contentType := strings.Split(contentTypeHeader, ";")[0]
 	if contentType != "text/html" {
 		return "", fmt.Errorf("Content-Type error: %s", contentType)
 	}
