@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/url"
 	"sync"
@@ -17,10 +16,11 @@ type config struct {
 	wg                 *sync.WaitGroup
 }
 
-func NewConfig(rawBaseURL string, maxConcurrency int) (*config, error) {
+func NewConfig(rawBaseURL string, maxConcurrency int) *config {
 	baseURL, err := url.Parse(rawBaseURL)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't parse base URL: %v", err)
+		log.Printf("Error parsing %s for config URL: %v", rawBaseURL, err)
+		return &config{}
 	}
 
 	return &config{
@@ -29,11 +29,10 @@ func NewConfig(rawBaseURL string, maxConcurrency int) (*config, error) {
 		mu:                 &sync.Mutex{},
 		concurrencyControl: make(chan struct{}, maxConcurrency),
 		wg:                 &sync.WaitGroup{},
-	}, nil
+	}
 }
 
 func (cfg *config) addPageVisit(normalizedURL string) (isFirst bool) {
-	log.Println("Adding page visit at ", normalizedURL)
 	cfg.mu.Lock()
 	defer cfg.mu.Unlock()
 
