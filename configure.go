@@ -6,9 +6,6 @@ import (
 	"sync"
 )
 
-const maxConcurrency int = 10
-const maxPages int = 1000
-
 type config struct {
 	pages              map[string]int
 	maxPages           int
@@ -18,7 +15,7 @@ type config struct {
 	wg                 *sync.WaitGroup
 }
 
-func NewConfig(rawBaseURL string, maxConcurrency int) (*config, error) {
+func NewConfig(rawBaseURL string, maxConcurrency, maxPages int) (*config, error) {
 	baseURL, err := url.Parse(rawBaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't parse base URL: %v", err)

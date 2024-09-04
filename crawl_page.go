@@ -6,17 +6,23 @@ import (
 )
 
 func (cfg *config) crawlPage(rawCurrentURL string) {
-	// To keep the expected workload reasonable, quit once we've reached a
-	// predetermined number of pages.
-	if len(cfg.pages) >= cfg.maxPages {
-		return
-	}
+	log.Println("Crawling page: ", rawCurrentURL)
 
 	cfg.concurrencyControl <- struct{}{}
 	defer func() {
 		<-cfg.concurrencyControl
 		cfg.wg.Done()
 	}()
+
+	// To keep the expected workload reasonable, quit once we've reached a
+	// predetermined number of pages.
+	cfg.mu.Lock()
+	numPages := len(cfg.pages)
+	cfg.mu.Unlock()
+	if numPages >= cfg.maxPages {
+		log.Println("Page limit exceeded.")
+		return
+	}
 
 	// We're crawling withing a site's internal structure, so any traversable
 	// links will have matching domains.
