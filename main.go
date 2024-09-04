@@ -5,8 +5,6 @@ import (
 	"os"
 )
 
-const maxConcurrency int = 1
-
 func main() {
 	// This webcrawler expects a single URL arg.
 	args := os.Args[1:]
