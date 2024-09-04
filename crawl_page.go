@@ -6,6 +6,12 @@ import (
 )
 
 func (cfg *config) crawlPage(rawCurrentURL string) {
+	// To keep the expected workload reasonable, quit once we've reached a
+	// predetermined number of pages.
+	if len(cfg.pages) >= cfg.maxPages {
+		return
+	}
+
 	cfg.concurrencyControl <- struct{}{}
 	defer func() {
 		<-cfg.concurrencyControl

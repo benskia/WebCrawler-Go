@@ -20,7 +20,6 @@ func getURLsFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
 	var traverseNodes func(*html.Node)
 	traverseNodes = func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "a" {
-			var href string
 			for _, a := range n.Attr {
 				if a.Key == "href" {
 					href, err := url.Parse(a.Val)

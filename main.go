@@ -22,10 +22,11 @@ func main() {
 
 	config, err := NewConfig(baseURL, maxConcurrency)
 	if err != nil {
-		fmt.Println("Failed to create configuration.")
+		fmt.Println("Error creating configuration: ", err)
 		os.Exit(1)
 	}
 
+	config.wg.Add(1)
 	config.crawlPage(baseURL)
 	config.wg.Wait()
 

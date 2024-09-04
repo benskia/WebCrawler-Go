@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/url"
 	"sync"
 )
 
-const maxConcurrency int = 1
+const maxConcurrency int = 10
+const maxPages int = 1000
 
 type config struct {
 	pages              map[string]int
+	maxPages           int
 	baseURL            *url.URL
 	mu                 *sync.Mutex
 	concurrencyControl chan struct{}
@@ -25,6 +26,7 @@ func NewConfig(rawBaseURL string, maxConcurrency int) (*config, error) {
 
 	return &config{
 		pages:              make(map[string]int),
+		maxPages:           maxPages,
 		baseURL:            baseURL,
 		mu:                 &sync.Mutex{},
 		concurrencyControl: make(chan struct{}, maxConcurrency),
@@ -33,7 +35,6 @@ func NewConfig(rawBaseURL string, maxConcurrency int) (*config, error) {
 }
 
 func (cfg *config) addPageVisit(normalizedURL string) (isFirst bool) {
-	log.Println("Adding page visit at ", normalizedURL)
 	cfg.mu.Lock()
 	defer cfg.mu.Unlock()
 
