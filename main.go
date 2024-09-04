@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
 )
 
 func main() {
@@ -41,36 +40,4 @@ func main() {
 	for url, count := range config.pages {
 		fmt.Printf("%s : %d\n", url, count)
 	}
-}
-
-func parseMaxConcurrency(args []string, defaultMaxConcurrency int) int {
-	if len(args) < 2 {
-		fmt.Println("No arg found for max concurrency. Using default concurrency limit: ", defaultMaxConcurrency)
-		return defaultMaxConcurrency
-	}
-
-	maxConcurrency, err := strconv.Atoi(args[1])
-	if err != nil {
-		fmt.Println("Error converting arg to int: ", err)
-		fmt.Println("Using default concurrency limit: ", defaultMaxConcurrency)
-		return defaultMaxConcurrency
-	}
-
-	return maxConcurrency
-}
-
-func parseMaxPages(args []string, defaultMaxPages int) int {
-	if len(args) < 3 {
-		fmt.Println("No arg found for max pages. Using default page limit: ", defaultMaxPages)
-		return defaultMaxPages
-	}
-
-	maxPages, err := strconv.Atoi(args[1])
-	if err != nil {
-		fmt.Println("Error converting arg to int: ", err)
-		fmt.Println("Using default page limit: ", defaultMaxPages)
-		return defaultMaxPages
-	}
-
-	return maxPages
 }
